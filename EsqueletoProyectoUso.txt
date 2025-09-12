@@ -1,0 +1,22 @@
+proyecto2_tablas_hash/
+│
+├── main.py                     # Punto de entrada principal (lanza la GUI)
+├── gui.py                      # Ventanas y menús con Tkinter
+├── hash_table.py               # Implementación de la tabla hash con encadenamiento
+├── models.py                   # Clases para Artículo u otros objetos
+├── database.py                 # Manejo del archivo articulos_db.txt
+│
+├── data/
+│   ├── articulos_db.txt        # Base de datos persistente (inicialmente vacío)
+│   └── articulos/              # Carpeta donde se guardan los .txt renombrados con el hash
+│
+├── utils/
+│   └── hashing.py              # Función para generar hash (FNV-1 u otro)
+│
+├── docs/
+│   └── README.md               # Descripción del proyecto, instalación y uso
+│
+└── tests/
+    ├── test_hash_table.py      # Pruebas unitarias para tabla hash
+    ├── test_database.py        # Pruebas para manejo de base de datos
+    └── test_utils.py           # Pruebas para funciones auxiliares
