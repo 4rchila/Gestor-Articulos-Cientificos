@@ -8,7 +8,7 @@ class Articulo:
         self.nombreArchivo = os.path.join('data', nombreArchivo)  
         self.hash = self.calcularHash()
 
-    def guardar_en_archivo(self):
+    def guardarEnArchivo(self):
         os.makedirs(os.path.dirname(self.nombreArchivo), exist_ok=True)
         
         with open(self.nombreArchivo, 'a', encoding='utf-8') as f:
@@ -34,53 +34,25 @@ class TablaHash:
         self.size = size
         self.table = [[] for _ in range(size)]
 
-    def _hash(self, key):
+    def Hash(self, key):
         return key % self.size
 
-    def insert(self, book):
-        index = self._hash(book.hash)
+    def insertar(self, book):
+        index = self.Hash(book.hash)
         self.table[index].append(book)
-        book.guardar_en_archivo()
+        book.guardarEnArchivo()
 
-    def find(self, titulo):
+    def encontrar(self, titulo):
         temp_article = Articulo(titulo, "", 0, "temp.txt")  
-        index = self._hash(temp_article.hash)
+        index = self.Hash(temp_article.hash)
         
         for book in self.table[index]:
             if book.titulo == titulo:
                 return book
         return None
 
-    def display(self):
+    def escribirEnPantalla(self):
         for i, bucket in enumerate(self.table):
                 print(f"\nBucket {i}:")
                 for book in bucket:
                     print(f"  Hash: {book.hash}, Título: {book.titulo}, Autores: {book.autores}, Año: {book.año}")
-
-if __name__ == "__main__":
-    hash_table = TablaHash()
-
-    book1 = Articulo("Cien años de soledad", "Gabriel García Márquez", 1967, "articulos_db.txt")
-    book2 = Articulo("1984", "George Orwell", 1949, "articulos_db.txt")
-    book3 = Articulo("El Quijote", "Miguel de Cervantes", 1605, "articulos_db.txt")
-
-    hash_table.insert(book1)
-    hash_table.insert(book2)
-    hash_table.insert(book3)
-
-    print("Contenido de la tabla hash:")
-    hash_table.display()
-
-    print("\nBuscando '1984':")
-    encontrado = hash_table.find("1984")
-    if encontrado:
-        print(f"Encontrado: {encontrado}")
-    else:
-        print("No encontrado")
-
-    print("\nContenido del archivo articulos_db.txt:")
-    try:
-        with open(os.path.join('data', 'articulos_db.txt'), 'r', encoding='utf-8') as f:
-            print(f.read())
-    except FileNotFoundError:
-        print("El archivo aún no existe o está vacío")
