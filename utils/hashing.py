@@ -18,17 +18,16 @@ class Articulo:
         return f"'{self.titulo}' por {self.autores} ({self.año})"  
 
     def calcularHash(self):
-        FNV_offset_basis = 2166136261
-        FNV_prime = 16777619
+        FNV_offset_basis = 0x811C9DC5  
+        FNV_prime = 0x01000193         
         hash_value = FNV_offset_basis
 
         for byte in self.titulo.encode('utf-8'):
-            hash_value ^= byte
-            hash_value *= FNV_prime
-            hash_value &= 0xffffffff  
+            hash_value ^= byte           
+            hash_value *= FNV_prime      
+            hash_value &= 0xFFFFFFFF     
 
         return hash_value
-
 
 class TablaHash:
     def __init__(self, size=256):
