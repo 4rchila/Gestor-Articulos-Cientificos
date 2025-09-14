@@ -3,7 +3,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'utils')))
 
-from hashing import Articulo, TablaHash
+from utils.hashing import Articulo, TablaHash
 
 hash_table = TablaHash()
 
