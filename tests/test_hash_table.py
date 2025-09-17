@@ -1,5 +1,5 @@
-from test_utils import Articulo
-from test_database import guardar_en_db, eliminar_de_db, leer_db
+from .test_utils import Articulo
+from .test_database import guardar_en_db, eliminar_de_db, leer_db
 import os
 
 class HashTable:

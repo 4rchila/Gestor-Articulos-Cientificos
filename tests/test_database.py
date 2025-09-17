@@ -3,19 +3,20 @@ import os
 
 DB_archivo = os.path.join('data', 'articulos_db.txt')
 
-def guardar_en_db(Articulo):
+def guardar_en_db(articulo):
     os.makedirs('data', exist_ok=True)
-    si_existe = set()
+    existentes = set()
     if os.path.exists(DB_archivo):
         with open(DB_archivo, 'r', encoding='utf-8') as f:
             for linea in f:
-                hash_conocido = linea.strip().split('|')[0]
-                si_existe.add(int(hash_conocido))
-
-    if Articulo.hash in si_existe:
+                hash_existente = linea.strip().split('|')[0]
+                existentes.add(int(hash_existente))
+    if articulo.hash in existentes:
         return
     with open(DB_archivo, 'a', encoding='utf-8') as f:
-        f.write(f"{Articulo.hash}|{Articulo.titulo}|{Articulo.autores}|{Articulo.año}|{Articulo.archivo}\n")
+        f.write(f"{articulo.hash}|{articulo.titulo}|{articulo.autores}|{articulo.año}|{articulo.nombreArchivo}\n")
+
+
 
 def leer_db():
     if not os.path.exists(DB_archivo):
