@@ -20,3 +20,6 @@ if __name__ == "__main__":
     print(resultado if resultado else "No encontrado")
 
     hash_table.eliminar(book2.hash)
+
+    #Si desean guaradar y probar mas datos hay que elminar hasta las lineas vacias de el archivo.txt de la base de datos db, si tiene una linea vaciua 
+    #aparecera error al leer la base de datos
