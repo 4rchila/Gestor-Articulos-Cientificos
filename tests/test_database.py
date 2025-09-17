@@ -1,0 +1,38 @@
+import os
+
+
+DB_archivo = os.path.join('data', 'articulos_db.txt')
+
+def guardar_en_db(Articulo):
+    os.makedirs('data', exist_ok=True)
+    si_existe = set()
+    if os.path.exists(DB_archivo):
+        with open(DB_archivo, 'r', encoding='utf-8') as f:
+            for linea in f:
+                hash_conocido = linea.strip().split('|')[0]
+                si_existe.add(int(hash_conocido))
+
+    if Articulo.hash in si_existe:
+        return
+    with open(DB_archivo, 'a', encoding='utf-8') as f:
+        f.write(f"{Articulo.hash}|{Articulo.titulo}|{Articulo.autores}|{Articulo.año}|{Articulo.archivo}\n")
+
+def leer_db():
+    if not os.path.exists(DB_archivo):
+        return []
+    articulos = []
+    with open(DB_archivo, 'r', encoding='utf-8') as f:
+        for linea in f:
+            hash_val, titulo, autores, año, archivo = linea.strip().split('|')
+            articulos.append({'hash': int(hash_val), 'titulo': titulo, 'autores': autores, 'año': año, 'archivo': archivo})
+    return articulos
+
+def sobrescribir_db(lista_articulos):
+    with open(DB_archivo, 'w', encoding='utf-8') as f:
+        for a in lista_articulos:
+            f.write(f"{a['hash']}|{a['titulo']}|{a['autores']}|{a['año']}|{a['archivo']}\n")
+
+def eliminar_de_db(hash_key):
+    articulos = leer_db()
+    articulos = [a for a in articulos if a['hash'] != hash_key]
+    sobrescribir_db(articulos)
