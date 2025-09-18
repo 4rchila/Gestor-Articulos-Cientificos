@@ -38,8 +38,9 @@ def main():
             autores = input("Autores: ")
             año = input("Año: ")
             nombre_archivo = input("Nombre del archivo (ej. libro.txt): ")
+            contenido = input("Escribe una breve descripción o contenido: ")
 
-            articulo = Articulo(titulo, autores, año, nombre_archivo)
+            articulo = Articulo(titulo, autores, año, nombre_archivo, contenido)
             tabla.insertar(articulo)
             print(f"Artículo '{titulo}' insertado con hash {articulo.hash}")
 
