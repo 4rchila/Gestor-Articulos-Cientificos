@@ -3,18 +3,18 @@ from hash_table import HashTable
 import os
 
 DATA_DIR = "data"
-DB_FILE = os.path.join(DATA_DIR, "articulos")
+DB_FILE = os.path.join(DATA_DIR, "articulos_db.txt")
 
 def limpiar_todo():
-    """Elimina todos los archivos de data y la base de datos."""
     if os.path.exists(DB_FILE):
-        os.remove(DB_FILE)
-        print("Se eliminó articulos")
+        with open(DB_FILE, "w", encoding="utf-8") as f:
+            f.write("")
+        print("Se limpió el contenido de articulos_db.txt")
 
     if os.path.exists(DATA_DIR):
         for archivo in os.listdir(DATA_DIR):
             ruta = os.path.join(DATA_DIR, archivo)
-            if os.path.isfile(ruta):
+            if os.path.isfile(ruta) and archivo.endswith(".txt") and archivo != "articulos_db.txt":
                 os.remove(ruta)
                 print(f"Se eliminó {archivo}")
 
