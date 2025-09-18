@@ -1,9 +1,10 @@
-# gui_integrated.py
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, scrolledtext
 import os
+import shutil
 from models import Articulo
 from hash_table import HashTable
+from database import guardar_en_db, leer_db
 
 class IntegratedScientificArticlesGUI:
     def __init__(self, root):
@@ -26,29 +27,26 @@ class IntegratedScientificArticlesGUI:
 
         # Configurar interfaz
         self.setup_ui()
+        self.load_articles_from_db()
         self.refresh_article_list()
 
     ##########################
     # CONFIGURACIÓN DE LA GUI
     ##########################
     def setup_ui(self):
-        # Título
         title_frame = tk.Frame(self.root, bg='#2c3e50', height=60)
         title_frame.pack(fill='x', padx=10, pady=(10, 0))
         title_frame.pack_propagate(False)
         tk.Label(title_frame, text="Sistema de Gestión de Artículos Científicos",
                  font=('Arial', 16, 'bold'), fg='white', bg='#2c3e50').pack(expand=True)
 
-        # Notebook
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill='both', expand=True, padx=10, pady=10)
 
-        # Pestañas
         self.create_add_article_tab()
         self.create_search_tab()
         self.create_list_tab()
 
-        # Barra de estado
         self.status_bar = tk.Label(self.root, text="Listo", relief=tk.SUNKEN, anchor='w', bg='#ecf0f1')
         self.status_bar.pack(side='bottom', fill='x')
 
@@ -61,8 +59,7 @@ class IntegratedScientificArticlesGUI:
         main_frame = tk.Frame(add_frame, bg='white', padx=20, pady=20)
         main_frame.pack(fill='both', expand=True, padx=10, pady=10)
 
-        # Metadatos
-        metadata_frame = tk.LabelFrame(main_frame, text="Metadatos del Artículo", font=('Arial', 12, 'bold'), bg='white')
+        metadata_frame = tk.LabelFrame(main_frame, text="Información del Artículo", font=('Arial', 12, 'bold'), bg='white')
         metadata_frame.pack(fill='x', pady=(0, 20))
         tk.Label(metadata_frame, text="Título:", font=('Arial', 10), bg='white').grid(row=0, column=0, sticky='w', padx=10, pady=5)
         tk.Entry(metadata_frame, textvariable=self.title_var, font=('Arial', 10), width=50).grid(row=0, column=1, sticky='w', padx=10, pady=5)
@@ -73,9 +70,11 @@ class IntegratedScientificArticlesGUI:
         tk.Label(metadata_frame, text="Año:", font=('Arial', 10), bg='white').grid(row=2, column=0, sticky='w', padx=10, pady=5)
         tk.Entry(metadata_frame, textvariable=self.year_var, font=('Arial', 10), width=20).grid(row=2, column=1, sticky='w', padx=10, pady=5)
 
+        tk.Label(metadata_frame, text="Descripción:", font=('Arial', 10), bg='white').grid(row=3, column=0, sticky='nw', padx=10, pady=5)
+        self.description_text = scrolledtext.ScrolledText(metadata_frame, wrap=tk.WORD, width=60, height=5, font=('Arial', 10))
+        self.description_text.grid(row=3, column=1, sticky='we', padx=10, pady=5)
         metadata_frame.columnconfigure(1, weight=1)
 
-        # Archivo
         file_frame = tk.LabelFrame(main_frame, text="Archivo del Artículo", font=('Arial', 12, 'bold'), bg='white')
         file_frame.pack(fill='x', pady=(0, 20))
         file_info_frame = tk.Frame(file_frame, bg='white')
@@ -88,7 +87,6 @@ class IntegratedScientificArticlesGUI:
         tk.Button(file_display_frame, text="Seleccionar Archivo", command=self.select_file,
                   bg='#3498db', fg='white', font=('Arial', 10), cursor='hand2').pack(side='right')
 
-        # Botones
         button_frame = tk.Frame(main_frame, bg='white')
         button_frame.pack(fill='x', pady=20)
         tk.Button(button_frame, text="Agregar Artículo", command=self.add_article,
@@ -112,11 +110,10 @@ class IntegratedScientificArticlesGUI:
         tk.Label(search_controls, text="Buscar:", font=('Arial', 10), bg='white').pack(side='left')
         tk.Entry(search_controls, textvariable=self.search_var, font=('Arial', 10), width=30).pack(side='left', padx=(10, 5))
         ttk.Combobox(search_controls, textvariable=self.search_type,
-                     values=["titulo", "autor", "año", "hash"], state="readonly", width=10).pack(side='left', padx=5)
+                     values=["titulo", "autores", "año", "hash"], state="readonly", width=10).pack(side='left', padx=5)
         tk.Button(search_controls, text="Buscar", command=self.search_articles,
                   bg='#3498db', fg='white', font=('Arial', 10), cursor='hand2').pack(side='left', padx=5)
 
-        # Resultados
         results_frame = tk.LabelFrame(main_frame, text="Resultados", font=('Arial', 12, 'bold'), bg='white')
         results_frame.pack(fill='both', expand=True)
         tree_frame = tk.Frame(results_frame, bg='white')
@@ -147,11 +144,13 @@ class IntegratedScientificArticlesGUI:
         controls_frame = tk.Frame(main_frame, bg='white')
         controls_frame.pack(fill='x', pady=(0, 20))
         tk.Label(controls_frame, text="Ordenar por:", font=('Arial', 12, 'bold'), bg='white').pack(side='left')
-        ttk.Combobox(controls_frame, textvariable=self.sort_type, values=["titulo", "autor", "año"], state="readonly", width=15).pack(side='left', padx=10)
+        ttk.Combobox(controls_frame, textvariable=self.sort_type, values=["titulo", "autores", "año"], state="readonly", width=15).pack(side='left', padx=10)
         tk.Button(controls_frame, text="Actualizar Lista", command=self.refresh_article_list,
                   bg='#3498db', fg='white', font=('Arial', 10), cursor='hand2').pack(side='left', padx=10)
+        
+        tk.Button(controls_frame, text="Borrar Todos", command=self.delete_all_articles,
+          bg='#e74c3c', fg='white', font=('Arial', 10), cursor='hand2').pack(side='left', padx=10)
 
-        # Lista
         list_section = tk.LabelFrame(main_frame, text="Todos los Artículos", font=('Arial', 12, 'bold'), bg='white')
         list_section.pack(fill='both', expand=True)
         tree_frame = tk.Frame(list_section, bg='white')
@@ -175,21 +174,43 @@ class IntegratedScientificArticlesGUI:
     # MÉTODOS DE ACCIÓN
     ##########################
     def select_file(self):
-        file_path = filedialog.askopenfilename(title="Seleccionar archivo PDF", filetypes=[("PDF files", "*.pdf")])
+        file_path = filedialog.askopenfilename(
+            title="Seleccionar archivo",
+            filetypes=[("Archivos PDF y TXT", "*.pdf *.txt")]
+        )
         if file_path:
             self.selected_file_path.set(file_path)
 
     def add_article(self):
+        # Validar campos obligatorios
+        if not self.title_var.get().strip() or not self.author_var.get().strip() or not self.year_var.get().strip():
+            messagebox.showwarning("Campos requeridos", "Por favor completa Título, Autor y Año")
+            return
+        if not self.selected_file_path.get():
+            messagebox.showwarning("Archivo requerido", "Selecciona un archivo PDF o TXT")
+            return
+
+        # Copiar archivo a data
+        dest_path = os.path.join("data", os.path.basename(self.selected_file_path.get()))
+        os.makedirs("data", exist_ok=True)
+        shutil.copy(self.selected_file_path.get(), dest_path)
+
         # Crear objeto Articulo
         article = Articulo(
-            titulo=self.title_var.get(),
-            autores=self.author_var.get(),
-            año=self.year_var.get(),
-            archivo=self.selected_file_path.get()
+            titulo=self.title_var.get().strip(),
+            autores=self.author_var.get().strip(),
+            año=self.year_var.get().strip(),
+            contenido=self.description_text.get("1.0", tk.END).strip(),
+            nombreArchivo=os.path.basename(dest_path)
         )
-        # Insertar en tabla hash (integrado)
+
+        # Guardar en tabla hash
         self.tabla_hash.insertar(article)
+        # Guardar en base de datos
+        guardar_en_db(article)
+
         messagebox.showinfo("Éxito", "Artículo agregado correctamente")
+        
         self.clear_fields()
         self.refresh_article_list()
 
@@ -198,24 +219,24 @@ class IntegratedScientificArticlesGUI:
         self.author_var.set("")
         self.year_var.set("")
         self.selected_file_path.set("")
+        self.description_text.delete("1.0", tk.END)
 
     def search_articles(self):
         self.search_tree.delete(*self.search_tree.get_children())
         query = self.search_var.get().lower()
         search_type = self.search_type.get()
-        # Buscar en tabla hash
         results = []
+
         if search_type == "hash":
             found = self.tabla_hash.buscar(query)
             if found:
                 results.append(found)
         else:
-            # Buscar en todos los buckets
             for bucket in self.tabla_hash.table:
                 for _, art in bucket:
                     if query in getattr(art, search_type).lower():
                         results.append(art)
-        # Mostrar resultados
+
         for art in results:
             self.search_tree.insert('', 'end', values=(art.hash, art.titulo, art.autores, art.año))
         self.status_bar.config(text=f"{len(results)} artículos encontrados")
@@ -231,3 +252,28 @@ class IntegratedScientificArticlesGUI:
         for art in all_articles:
             self.list_tree.insert('', 'end', values=(art.hash, art.titulo, art.autores, art.año))
         self.status_bar.config(text=f"{len(all_articles)} artículos en el sistema")
+
+    def load_articles_from_db(self):
+        db_articles = leer_db()
+        for a in db_articles:
+            article = Articulo(
+                titulo=a['titulo'],
+                autores=a['autores'],
+                año=a['año'],
+                contenido=a['contenido'],
+                nombreArchivo=os.path.basename(a['archivo'])
+            )
+            self.tabla_hash.insertar(article)
+
+    def delete_all_articles(self):
+        if messagebox.askyesno("Confirmar", "¿Estás seguro de que deseas borrar todos los artículos?"):
+            # Eliminar archivos y registros de la DB
+            from database import eliminar_de_db, sobrescribir_db
+            all_articles = leer_db()
+            for a in all_articles:
+                eliminar_de_db(a['hash'])
+            # Limpiar tabla hash
+            self.tabla_hash = HashTable()
+            # Actualizar lista
+            self.refresh_article_list()
+            messagebox.showinfo("Éxito", "Todos los artículos han sido eliminados")
