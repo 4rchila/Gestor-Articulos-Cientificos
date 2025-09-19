@@ -9,11 +9,18 @@ def guardar_en_db(articulo):
         with open(DB_archivo, 'r', encoding='utf-8') as f:
             for linea in f:
                 hash_existente = linea.strip().split('|')[0]
-                existentes.add(int(hash_existente))
+                try:
+                    existentes.add(int(hash_existente))
+                except ValueError:
+                    # Ignorar líneas corruptas o títulos mal guardados
+                    continue
+
     if articulo.hash in existentes:
         return
+
+    # Guardamos SOLO los metadatos en articulos_db.txt
     with open(DB_archivo, 'a', encoding='utf-8') as f:
-        f.write(f"{articulo.hash}|{articulo.titulo}|{articulo.autores}|{articulo.año}|{articulo.contenido}|{os.path.basename(articulo.nombreArchivo)}\n")
+        f.write(f"{articulo.hash}|{articulo.titulo}|{articulo.autores}|{articulo.año}|{articulo.nombreArchivo}\n")
 
 def leer_db():
     if not os.path.exists(DB_archivo):
@@ -22,23 +29,28 @@ def leer_db():
     with open(DB_archivo, 'r', encoding='utf-8') as f:
         for linea in f:
             partes = linea.strip().split('|')
-            if len(partes) != 6:
+            if len(partes) != 5:
                 continue
-            hash_val, titulo, autores, año, contenido, archivo = partes
+            hash_val, titulo, autores, año, archivo = partes
+            archivo_path = os.path.join("data", "articulos", archivo)
+            contenido = ""
+            if os.path.exists(archivo_path):
+                with open(archivo_path, "r", encoding="utf-8") as art_file:
+                    contenido = art_file.read()
             articulos.append({
                 'hash': int(hash_val),
                 'titulo': titulo,
                 'autores': autores,
                 'año': año,
                 'contenido': contenido,
-                'archivo': os.path.join("data", archivo)
+                'archivo': archivo_path
             })
     return articulos
 
 def sobrescribir_db(lista_articulos):
     with open(DB_archivo, 'w', encoding='utf-8') as f:
         for a in lista_articulos:
-            f.write(f"{a['hash']}|{a['titulo']}|{a['autores']}|{a['año']}|{a['contenido']}|{os.path.basename(a['archivo'])}\n")
+            f.write(f"{a['hash']}|{a['titulo']}|{a['autores']}|{a['año']}|{os.path.basename(a['archivo'])}\n")
 
 def eliminar_de_db(hash_key):
     articulos = leer_db()

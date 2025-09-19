@@ -1,0 +1,7 @@
+=== Metadatos ===
+Título: prueba
+Autor(es): prueba1
+Año: 2025
+
+=== Descripción ===
+archivo de prueba

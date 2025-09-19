@@ -1,10 +1,10 @@
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox, scrolledtext
+from tkinter import ttk, messagebox, scrolledtext
 import os
-import shutil
 from models import Articulo
 from hash_table import HashTable
 from database import guardar_en_db, leer_db
+
 
 class IntegratedScientificArticlesGUI:
     def __init__(self, root):
@@ -14,7 +14,7 @@ class IntegratedScientificArticlesGUI:
         self.root.configure(bg='#f0f0f0')
 
         # Variables GUI
-        self.selected_file_path = tk.StringVar()
+        self.selected_file_path = tk.StringVar()  # ahora será el nombre del archivo escrito
         self.title_var = tk.StringVar()
         self.author_var = tk.StringVar()
         self.year_var = tk.StringVar()
@@ -79,13 +79,8 @@ class IntegratedScientificArticlesGUI:
         file_frame.pack(fill='x', pady=(0, 20))
         file_info_frame = tk.Frame(file_frame, bg='white')
         file_info_frame.pack(fill='x', padx=10, pady=10)
-        tk.Label(file_info_frame, text="Archivo seleccionado:", font=('Arial', 10), bg='white').pack(anchor='w')
-        file_display_frame = tk.Frame(file_info_frame, bg='white')
-        file_display_frame.pack(fill='x', pady=(5, 10))
-        tk.Label(file_display_frame, textvariable=self.selected_file_path, font=('Arial', 9), bg='#ecf0f1',
-                 relief='sunken', anchor='w').pack(side='left', fill='x', expand=True, padx=(0, 10))
-        tk.Button(file_display_frame, text="Seleccionar Archivo", command=self.select_file,
-                  bg='#3498db', fg='white', font=('Arial', 10), cursor='hand2').pack(side='right')
+        tk.Label(file_info_frame, text="Nombre del archivo (.txt):", font=('Arial', 10), bg='white').pack(anchor='w')
+        tk.Entry(file_info_frame, textvariable=self.selected_file_path, font=('Arial', 10), width=50).pack(fill='x', pady=5)
 
         button_frame = tk.Frame(main_frame, bg='white')
         button_frame.pack(fill='x', pady=20)
@@ -173,44 +168,40 @@ class IntegratedScientificArticlesGUI:
     ##########################
     # MÉTODOS DE ACCIÓN
     ##########################
-    def select_file(self):
-        file_path = filedialog.askopenfilename(
-            title="Seleccionar archivo",
-            filetypes=[("Archivos PDF y TXT", "*.pdf *.txt")]
-        )
-        if file_path:
-            self.selected_file_path.set(file_path)
-
     def add_article(self):
         # Validar campos obligatorios
         if not self.title_var.get().strip() or not self.author_var.get().strip() or not self.year_var.get().strip():
             messagebox.showwarning("Campos requeridos", "Por favor completa Título, Autor y Año")
             return
-        if not self.selected_file_path.get():
-            messagebox.showwarning("Archivo requerido", "Selecciona un archivo PDF o TXT")
+        if not self.selected_file_path.get().strip():
+            messagebox.showwarning("Archivo requerido", "Escribe el nombre del archivo TXT")
             return
 
-        # Copiar archivo a data
-        dest_path = os.path.join("data", os.path.basename(self.selected_file_path.get()))
-        os.makedirs("data", exist_ok=True)
-        shutil.copy(self.selected_file_path.get(), dest_path)
+        descripcion = self.description_text.get("1.0", tk.END).strip()
 
         # Crear objeto Articulo
         article = Articulo(
             titulo=self.title_var.get().strip(),
             autores=self.author_var.get().strip(),
             año=self.year_var.get().strip(),
-            contenido=self.description_text.get("1.0", tk.END).strip(),
-            nombreArchivo=os.path.basename(dest_path)
+            contenido=descripcion,
+            nombreArchivo=f"{hash(self.title_var.get().strip() + self.author_var.get().strip() + self.year_var.get().strip()) & 0xFFFFFFFF}.txt"
         )
 
-        # Guardar en tabla hash
+        # Verificar duplicados
+        if self.tabla_hash.buscar(str(article.hash)):
+            messagebox.showwarning("Duplicado", "Este artículo ya existe en el sistema")
+            return
+
+        # Guardar archivo en carpeta usando método del modelo
+        article.guardarEnArchivo()
+
+        # Guardar en tabla hash y DB
         self.tabla_hash.insertar(article)
-        # Guardar en base de datos
         guardar_en_db(article)
 
-        messagebox.showinfo("Éxito", "Artículo agregado correctamente")
-        
+        messagebox.showinfo("Éxito", f"Artículo '{article.titulo}' agregado correctamente")
+
         self.clear_fields()
         self.refresh_article_list()
 
@@ -267,13 +258,10 @@ class IntegratedScientificArticlesGUI:
 
     def delete_all_articles(self):
         if messagebox.askyesno("Confirmar", "¿Estás seguro de que deseas borrar todos los artículos?"):
-            # Eliminar archivos y registros de la DB
             from database import eliminar_de_db, sobrescribir_db
             all_articles = leer_db()
             for a in all_articles:
                 eliminar_de_db(a['hash'])
-            # Limpiar tabla hash
             self.tabla_hash = HashTable()
-            # Actualizar lista
             self.refresh_article_list()
             messagebox.showinfo("Éxito", "Todos los artículos han sido eliminados")

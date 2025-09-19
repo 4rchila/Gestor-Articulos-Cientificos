@@ -1,0 +1,7 @@
+=== Metadatos ===
+Título: prueba2
+Autor(es): maspurebas
+Año: 2025
+
+=== Contenido ===
+otra prueba
